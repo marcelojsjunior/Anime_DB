@@ -124,7 +124,7 @@ def callback():
     tokens = response.json()
     access_token = tokens["access_token"]
     refresh_token = tokens["refresh_token"]
-    expires_in = tokens.get("expires_in", 2592000)  # 30 dias padrão se não informado
+    expires_in = tokens.get("expires_in", 2592000)
 
     save_tokens(access_token, refresh_token, expires_in)
 
@@ -145,7 +145,7 @@ def test_api():
     headers = {'Authorization': f'Bearer {access_token}'}
     response = requests.get('https://api.myanimelist.net/v2/users/@me', headers=headers)
 
-    if response.status_code == 401:  # Token expirado mesmo após renovação
+    if response.status_code == 401:
         return redirect('/login')
 
     return jsonify(response.json())
