@@ -3,6 +3,7 @@ import requests
 from dotenv import load_dotenv, set_key
 import time
 import pandas as pd
+from tqdm import tqdm
 
 ENV_FILE = '.env'
 load_dotenv(ENV_FILE)
@@ -111,34 +112,37 @@ def get_anime_info(anime_ids, max_retries=3):
     headers = {"Authorization": f"Bearer {token}"}
     data_list = []
 
-    for anime_id in anime_ids:
+    with tqdm(anime_ids, desc="Extraindo animes", unit="anime") as progress_bar:
+        for anime_id in progress_bar:
+            os.system('cls' if os.name == 'nt' else 'clear')
+            progress_bar.set_postfix_str(f"ID {anime_id}")
 
-        for attempt in range(1, max_retries +1):
-            url = f"https://api.myanimelist.net/v2/anime/{anime_id}"
-            params = {"fields": FIELDS}
+            for attempt in range(1, max_retries + 1):
+                url = f"https://api.myanimelist.net/v2/anime/{anime_id}"
+                params = {"fields": FIELDS}
 
-            response = requests.get(url, headers=headers, params=params)
+                response = requests.get(url, headers=headers, params=params)
 
-            if response.status_code == 200:
-                raw_data = response.json()
-                flattened = flatten_anime_data(raw_data)
-                data_list.append(flattened)
-                print(f"[OK] Anime ID {anime_id} extraído com sucesso.")
-                break
-            else:
-                print(f"[ERRO] Anime ID {anime_id}, tentativa {attempt}: {response.status_code}")
-                print(response.text)
-                if attempt < max_retries:
-                    print("Tentando novamente em 1 segundo...")
-                    time.sleep(1)
+                if response.status_code == 200:
+                    raw_data = response.json()
+                    flattened = flatten_anime_data(raw_data)
+                    data_list.append(flattened)
+                    progress_bar.write(
+                        f"[OK] Anime ID {anime_id} extraído com sucesso.")
+                    break
                 else:
-                    print(f"Falha ao extrair Anime ID {anime_id} após {max_retries} tentativas.")
+                    progress_bar.write(f"[ERRO] Anime ID {anime_id}, tentativa {attempt}: {response.status_code}")
+                    progress_bar.write(response.text[:100] + "...")
+                    if attempt < max_retries:
+                        time.sleep(1)
+                    else:
+                        progress_bar.write(f"Falha ao extrair Anime ID {anime_id} após {max_retries} tentativas.")
 
-        time.sleep(1)
+            time.sleep(1)
 
     return pd.DataFrame(data_list)
 
-anime_ids = list(range(1, 1001))
+anime_ids = list(range(1, 101))
 df = get_anime_info(anime_ids)
 df.to_excel("animes_info.xlsx", index=False)
 
