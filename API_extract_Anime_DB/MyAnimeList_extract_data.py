@@ -1,6 +1,8 @@
 import os
 import requests
 from dotenv import load_dotenv, set_key
+import time
+import pandas as pd
 
 ENV_FILE = '.env'
 load_dotenv(ENV_FILE)
@@ -60,39 +62,85 @@ def refresh_access_token():
     print("Token renovado com sucesso!")
     return new_tokens['access_token']
 
+def flatten_anime_data(data):
+    flattened = {
+        'id': data.get('id'),
+        'title': data.get('title'),
+        'start_date': data.get('start_date'),
+        'end_date': data.get('end_date'),
+        'synopsis': data.get('synopsis'),
+        'mean': data.get('mean'),
+        'rank': data.get('rank'),
+        'popularity': data.get('popularity'),
+        'num_list_users': data.get('num_list_users'),
+        'num_scoring_users': data.get('num_scoring_users'),
+        'status': data.get('status'),
+        'num_episodes': data.get('num_episodes'),
+        'source': data.get('source'),
+        'average_episode_duration': data.get('average_episode_duration'),
+        'rating': data.get('rating'),
+        'background': data.get('background'),
+        'season': data.get('start_season', {}).get('season'),
+        'season_year': data.get('start_season', {}).get('year'),
+        'broadcast_day': data.get('broadcast', {}).get('day_of_the_week'),
+        'broadcast_time': data.get('broadcast', {}).get('start_time'),
+        'main_picture_url': data.get('main_picture', {}).get('large'),
 
-def get_anime_info(anime_id):
+        'genres': ', '.join([g['name'] for g in data.get('genres', [])]),
+        'studios': ', '.join([s['name'] for s in data.get('studios', [])]),
+    }
+    return flattened
+
+## Por algum motivo a API não está funcionando corretamente com a paginação, por isso, preciso extrair anime por anime.
+## Tentei fazer um paralelismo mas a API da problemas por muitas requisições, o jeito é continuar a extração um por um mesmo.
+
+def get_anime_info(anime_ids, max_retries=3):
     token = get_valid_token()
     if not token:
         print("Não foi possível obter um token válido.")
-        return None
+        return pd.DataFrame()
 
     FIELDS = (
-        'id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,'
-        'popularity,num_list_users,num_scoring_users,status,genres,'
-        'num_episodes,start_season,broadcast,source,average_episode_duration,rating,'
-        'pictures,background,related_anime,related_manga,recommendations,studios,statistics'
+        "id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,"
+        "popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,"
+        "status,genres,num_episodes,start_season,broadcast,source,"
+        "average_episode_duration,rating,pictures,background,related_anime,related_manga,"
+        "recommendations,studios,statistics"
     )
 
-    url = f"https://api.myanimelist.net/v2/anime/{anime_id}"
     headers = {"Authorization": f"Bearer {token}"}
-    params = {"fields": FIELDS}
+    data_list = []
 
-    response = requests.get(url, headers=headers, params=params)
+    for anime_id in anime_ids:
 
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(f"Erro ao buscar anime ID {anime_id}: {response.status_code}")
-        print(response.text)
-        return None
+        for attempt in range(1, max_retries +1):
+            url = f"https://api.myanimelist.net/v2/anime/{anime_id}"
+            params = {"fields": FIELDS}
+
+            response = requests.get(url, headers=headers, params=params)
+
+            if response.status_code == 200:
+                raw_data = response.json()
+                flattened = flatten_anime_data(raw_data)
+                data_list.append(flattened)
+                print(f"[OK] Anime ID {anime_id} extraído com sucesso.")
+                break
+            else:
+                print(f"[ERRO] Anime ID {anime_id}, tentativa {attempt}: {response.status_code}")
+                print(response.text)
+                if attempt < max_retries:
+                    print("Tentando novamente em 1 segundo...")
+                    time.sleep(1)
+                else:
+                    print(f"Falha ao extrair Anime ID {anime_id} após {max_retries} tentativas.")
+
+        time.sleep(1)
+
+    return pd.DataFrame(data_list)
+
+anime_ids = list(range(1, 1001))
+df = get_anime_info(anime_ids)
+df.to_excel("animes_info.xlsx", index=False)
 
 
-if __name__ == "__main__":
-    anime_id = 1
-    anime_info = get_anime_info(anime_id)
 
-    if anime_info:
-        print("Informações do Anime:")
-        for key, value in anime_info.items():
-            print(f"{key}: {value}")
