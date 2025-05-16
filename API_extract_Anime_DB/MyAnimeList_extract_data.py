@@ -144,7 +144,7 @@ def get_anime_info(anime_ids, max_retries=3):
 
 anime_ids = list(range(1, 101))
 df = get_anime_info(anime_ids)
-df.to_excel("animes_info.xlsx", index=False)
+df.to_csv("animes_info.csv", index=False)
 
 
 
