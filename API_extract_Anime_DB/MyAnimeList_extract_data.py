@@ -4,6 +4,7 @@ from dotenv import load_dotenv, set_key
 import time
 import pandas as pd
 from tqdm import tqdm
+from google.cloud import bigquery
 
 ENV_FILE = '.env'
 load_dotenv(ENV_FILE)
@@ -11,6 +12,16 @@ load_dotenv(ENV_FILE)
 CLIENT_ID = os.getenv('MAL_CLIENT_ID')
 TOKEN_URL = "https://myanimelist.net/v1/oauth2/token"
 
+
+load_dotenv(dotenv_path=r"C:\Users\Marcelo\Projetos\Anime_DB\API_extract_Anime_DB\.env")
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+bg_projeto = os.getenv("BIGQUERY_PROJECT_ID")
+
+client = bigquery.Client(project=bg_projeto)
+
+dataset_id = f"{bg_projeto}.Anime_DB"
+table_id = f"{dataset_id}.animes_info_raw"
 
 def get_valid_token():
     access_token = os.getenv('MAL_ACCESS_TOKEN')
@@ -142,9 +153,30 @@ def get_anime_info(anime_ids, max_retries=3):
 
     return pd.DataFrame(data_list)
 
-anime_ids = list(range(1, 101))
+## Função que vai pegar o último anime com ID na base e extrair da API
+
+def get_last_anime_id_bigquery(client, table_id):
+    query = f"""
+        SELECT MAX(id) as max_id
+        FROM `{table_id}`
+    """
+    try:
+        query_job = client.query(query)
+        result = query_job.result()
+        row = next(result)
+        return int(row.max_id) if row.max_id is not None else 0
+    except NotFound:
+        print("Tabela não encontrada. Começando do ID 1.")
+        return 0
+    except Exception as e:
+        print(f"Erro ao consultar BigQuery: {e}")
+        return 0
+
+ultimo_id = get_last_anime_id_bigquery(client, table_id)
+print(f"Último ID encontrado: {ultimo_id}")
+
+quantidade_novos_animes = 5000
+anime_ids = list(range(ultimo_id + 1, ultimo_id + 1 + quantidade_novos_animes))
 df = get_anime_info(anime_ids)
 df.to_csv("animes_info.csv", index=False)
-
-
 

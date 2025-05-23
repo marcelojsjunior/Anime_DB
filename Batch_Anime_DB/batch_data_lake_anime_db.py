@@ -80,7 +80,11 @@ def load_data_from_file_to_table(client, dataset_id, table_name, file_path):
         source_format=bigquery.SourceFormat.CSV,
         skip_leading_rows=1,
         max_bad_records=500,
-        ignore_unknown_values=True
+        ignore_unknown_values=True,
+        field_delimiter=",",
+        quote_character='"',
+        allow_quoted_newlines=True,
+        write_disposition=bigquery.WriteDisposition.WRITE_APPEND
     )
 
     with open(file_path, "rb") as source_file:
