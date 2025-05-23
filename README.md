@@ -48,13 +48,15 @@ A solução foi desenvolvida com foco em escalabilidade e controle de dados hist
 
 ## 📁 Estrutura do projeto
 
+```plaintext
 📂 Anime_DB/
-├── .env # Variáveis de ambiente (tokens, credenciais)
-├── MyAnimeList_extract_data.py # Script principal de extração
-├── batch_upload.py # Upload do .csv para o BigQuery
-├── requirements.txt # Dependências Python
-├── animes_info.csv # Backup local dos dados extraídos
-└── README.md # Documentação do projeto
+├── .env                     # Variáveis de ambiente (tokens, credenciais)
+├── MyAnimeList_extract_data.py  # Script principal de extração
+├── batch_upload.py          # Upload do .csv para o BigQuery
+├── requirements.txt         # Dependências Python
+├── animes_info.csv          # Backup local dos dados extraídos
+└── README.md                # Documentação do projeto
+```
 
 Abaixo, documentação visual dos outputs do projeto
 
