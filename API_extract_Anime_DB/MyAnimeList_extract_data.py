@@ -157,7 +157,7 @@ def get_anime_info(anime_ids, max_retries=3):
 
 def get_last_anime_id_bigquery(client, table_id):
     query = f"""
-        SELECT MAX(id) as max_id
+        SELECT MAX(CAST(id AS INT64)) as max_id
         FROM `{table_id}`
     """
     try:
@@ -175,7 +175,7 @@ def get_last_anime_id_bigquery(client, table_id):
 ultimo_id = get_last_anime_id_bigquery(client, table_id)
 print(f"Último ID encontrado: {ultimo_id}")
 
-quantidade_novos_animes = 5000
+quantidade_novos_animes = 1000
 anime_ids = list(range(ultimo_id + 1, ultimo_id + 1 + quantidade_novos_animes))
 df = get_anime_info(anime_ids)
 df.to_csv("animes_info.csv", index=False)
