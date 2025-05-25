@@ -60,3 +60,7 @@ Scrips SQL para tratamento da tabela bronze:
 
 ![image](https://github.com/user-attachments/assets/98b12112-30ae-43bd-babc-fd57582cc1d1)
 
+Dag airflow: 
+![airflow](https://github.com/user-attachments/assets/c7c7b0e1-652f-4174-bdcc-b8ca734108c4)
+
+
