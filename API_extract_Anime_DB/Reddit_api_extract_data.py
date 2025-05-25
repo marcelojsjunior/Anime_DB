@@ -15,9 +15,9 @@ dataset_id = f"{bg_projeto}.Anime_DB"
 table_id = f"{dataset_id}.animes_info_bronze"
 
 reddit = praw.Reddit(
-    client_id="xywdoBzPDWv7qrGhCcDsuA",
-    client_secret="A2Y1BltgvL2i9IOQBaSXdBWHZqcwcw",
-    user_agent="Base de Animes by marcelojsjunior"
+    client_id=os.getenv("REDDIT_CLIENT_ID"),
+    client_secret=os.getenv("REDDIT_CLIENT_SECRET"),
+    user_agent=os.getenv("REDDIT_USER_AGENT")
 )
 
 def get_top_500_animes(client, table_id):
